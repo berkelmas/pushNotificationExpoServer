@@ -54,24 +54,21 @@ const sendNotification = async (req, res) => {
   // compressed).
   let chunks = expo.chunkPushNotifications(messages);
   let tickets = [];
-  //return res.json(messages);
 
-  for (let chunk of chunks) {
-    try {
-      let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-      console.log(ticketChunk);
-      tickets.push(...ticketChunk);
-      // NOTE: If a ticket contains an error code in ticket.details.error, you
-      // must handle it appropriately. The error codes are listed in the Expo
-      // documentation:
-      // https://docs.expo.io/versions/latest/guides/push-notifications#response-format
-    } catch (error) {
-      console.error(error);
-      res.json(error);
+  await (async () => {
+    for (let chunk of chunks) {
+      try {
+        let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+        tickets.push(...ticketChunk);
+        // NOTE: If a ticket contains an error code in ticket.details.error, you
+        // must handle it appropriately. The error codes are listed in the Expo
+        // documentation:
+        // https://docs.expo.io/versions/latest/guides/push-notifications#response-format
+      } catch (error) {
+        console.error(error);
+      }
     }
-  }
-
-  res.json({ status: "success" });
+  })();
 
   // // Later, after the Expo push notification service has delivered the
   // // notifications to Apple or Google (usually quickly, but allow the the service
@@ -98,7 +95,7 @@ const sendNotification = async (req, res) => {
   // }
 
   // let receiptIdChunks = expo.chunkPushNotificationReceiptIds(receiptIds);
-  // (async () => {
+  // await (async () => {
   //   // Like sending notifications, there are different strategies you could use
   //   // to retrieve batches of receipts from the Expo service.
   //   for (let chunk of receiptIdChunks) {
@@ -108,7 +105,7 @@ const sendNotification = async (req, res) => {
 
   //       // The receipts specify whether Apple or Google successfully received the
   //       // notification and information about an error, if one occurred.
-  //       for (let receipt of receipts) {
+  //       for (let receipt of Object.values(receipts)) {
   //         if (receipt.status === "ok") {
   //           continue;
   //         } else if (receipt.status === "error") {
@@ -128,6 +125,8 @@ const sendNotification = async (req, res) => {
   //     }
   //   }
   // })();
+
+  res.json({ status: "success" });
 };
 
 const saveUserIdWithDeviceId = (req, res) => {
@@ -146,12 +145,10 @@ const saveUserIdWithDeviceId = (req, res) => {
           .collection("messages")
           .add(newItem)
           .then(writeResult => {
-            console.log(writeResult);
             return res.json(writeResult);
           })
           .catch(err => res.json({ status: "not successful" }));
       } else {
-        let items = [];
         item.forEach(doc => {
           admin
             .firestore()
@@ -163,7 +160,6 @@ const saveUserIdWithDeviceId = (req, res) => {
             })
             .catch(err => res.json({ status: "failed" }));
         });
-        res.json(items);
       }
     })
     .catch(err => res.json({ status: "failed" }));

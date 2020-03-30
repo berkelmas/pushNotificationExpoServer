@@ -9,8 +9,8 @@ firebaseAdminMiddleware();
 
 app
   .use(cors({ origin: true }))
-  .use(bodyParser.json())
   .use(bodyParser.urlencoded({ extended: false }))
+  .use(bodyParser.json())
   .use("/", require("./routes/mainRoutes"))
   .get("*", (req, res) =>
     res.status(404).json({ status: false, data: "Endpoint not found." })
